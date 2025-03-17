@@ -119,38 +119,36 @@ class Habit:
         return habits
 
     @staticmethod
-    def update_habit(id):
+    def update_habit(id, new_name=None, new_per=None, new_desc=None):
         """
-        Updates a habit's details based on user input.
+        Updates a habit's details based on provided parameters.
         
-        Prompts the user for new values and updates only the fields
-        that the user provides input for.
+        Updates only the fields that have been provided.
         
         Args:
             id: The ID of the habit to update
+            new_name (str, optional): New name for the habit
+            new_per (str, optional): New periodicity for the habit (Daily/Weekly/Monthly)
+            new_desc (str, optional): New description for the habit
         """
         conn = Habit.connect_db()
         cursor = conn.cursor()
-        habit = Habit.get_by_id(id)
-        # Get new values from user input
-        new_name = input("Please enter a new Habit Name, Leave blank to skip field ")
-        new_per = input("Please enter a new Habit Periodicity, Leave blank to skip field ")
-        new_desc = input("Please enter a new Habit Description, Leave blank to skip field ")
 
         # Update only provided fields
-        if new_name != '':
-            cursor.execute("""UPDATE Habit SET name = ? WHERE habitID = ?""",(new_name, id,))
-        if new_per != '' and new_per in ["Daily", "Weekly", "Monthly"]:
-            cursor.execute("""UPDATE Habit SET periodicity = ? WHERE habitID = ?""",(new_per, id,))
-        if new_desc != '':
-            cursor.execute("""UPDATE Habit SET description = ? WHERE habitID = ?""",(new_desc, id,))
+        if new_name:
+            cursor.execute("""UPDATE Habit SET name = ? WHERE habitID = ?""", (new_name, id))
+        if new_per and new_per in ["Daily", "Weekly", "Monthly"]:
+            cursor.execute("""UPDATE Habit SET periodicity = ? WHERE habitID = ?""", (new_per, id))
+        if new_desc:
+            cursor.execute("""UPDATE Habit SET description = ? WHERE habitID = ?""", (new_desc, id))
 
         conn.commit()
+        conn.close()
 
     @staticmethod
     def delete_habit(id):
         """
-        Deletes a habit from the database.
+        Deletes a habit and its associated check-ins from the database.
         
         Args:
             id: The ID of the habit to delete
@@ -158,7 +156,32 @@ class Habit:
         conn = Habit.connect_db()
         cursor = conn.cursor()
 
-        cursor.execute("""DELETE FROM Habit WHERE habitID = ?""",(id,))
+        habit = Habit.get_by_id(id)
+
+        # Delete associated check-ins
+        cursor.execute("""DELETE FROM CheckIn WHERE habitID = ?""", (id,))
+
+        # Delete the habit
+        cursor.execute("""DELETE FROM Habit WHERE habitID = ?""", (id,))
 
         conn.commit()
         conn.close()
+        print(f"{habit.name} and its associated check-ins successfully deleted!")
+
+    @staticmethod
+    def is_valid_id(habit_id):
+        """
+        Checks if a habit ID is valid (exists in the database).
+        
+        Args:
+            habit_id: The ID of the habit to check
+            
+        Returns:
+            bool: True if the ID exists, False otherwise
+        """
+        conn = Habit.connect_db()
+        cursor = conn.cursor()
+        cursor.execute("""SELECT 1 FROM Habit WHERE habitID = ?""", (habit_id,))
+        exists = cursor.fetchone() is not None
+        conn.close()
+        return exists

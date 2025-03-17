@@ -42,8 +42,13 @@ while user_input != 'exit':
 
     # Handle retrieving a specific habit
     elif user_input == "get habit":
-        habit_id = input("Enter a valid Habit ID : ")
-        habit = Habit.get_by_id(habit_id)
+        while True:
+            selected_id = input("Select a valid habit ID : ")
+            if Habit.is_valid_id(selected_id):
+                break
+            else:
+                print("Invalid ID. Please enter a valid habit ID.")
+        habit = Habit.get_by_id(selected_id)
         if habit:
             print(habit.to_string())
 
@@ -67,8 +72,16 @@ while user_input != 'exit':
             for x in habits:
                 print(x)
         # Get habit to update
-        selected_id = input("Select a valid habit ID : ")
-        Habit.update_habit(selected_id)
+        while True:
+            selected_id = input("Select a valid habit ID : ")
+            if Habit.is_valid_id(selected_id):
+                break
+            else:
+                print("Invalid ID. Please enter a valid habit ID.")
+        new_name = input("Please enter a new Habit Name, Leave blank to skip field ")
+        new_per = input("Please enter a new Habit Periodicity, Leave blank to skip field ")
+        new_desc = input("Please enter a new Habit Description, Leave blank to skip field ")
+        Habit.update_habit(selected_id,new_name , new_per, new_desc)
 
     # Handle deleting a habit
     elif user_input == "delete habit":
@@ -80,7 +93,12 @@ while user_input != 'exit':
             for x in habits:
                 print(x)
         # Get habit to delete
-        selected_id = input("Select a valid habit ID : ")
+        while True:
+            selected_id = input("Select a valid habit ID : ")
+            if Habit.is_valid_id(selected_id):
+                break
+            else:
+                print("Invalid ID. Please enter a valid habit ID.")
         Habit.delete_habit(selected_id)
 
     # Check-in related commands
